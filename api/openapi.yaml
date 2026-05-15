@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: Go Vinyl API
+  version: 0.1.0
+  description: API for keeping track of a vinyl record collection.
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /records:
+    get:
+      summary: List or search records
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search term for title, artist, label, or notes
+      responses:
+        "200":
+          description: Records found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Record"
+
+    post:
+      summary: Add a record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecordRequest"
+      responses:
+        "201":
+          description: Record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record"
+
+  /records/{id}:
+    get:
+      summary: Describe a record
+      parameters:
+        - $ref: "#/components/parameters/RecordId"
+      responses:
+        "200":
+          description: Record found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record"
+        "404":
+          description: Record not found
+
+    put:
+      summary: Update a record
+      parameters:
+        - $ref: "#/components/parameters/RecordId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecordRequest"
+      responses:
+        "200":
+          description: Record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record"
+        "404":
+          description: Record not found
+
+    delete:
+      summary: Delete a record
+      parameters:
+        - $ref: "#/components/parameters/RecordId"
+      responses:
+        "204":
+          description: Record deleted
+        "404":
+          description: Record not found
+
+components:
+  parameters:
+    RecordId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Record:
+      type: object
+      required:
+        - id
+        - title
+        - artist
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        artist:
+          type: string
+        label:
+          type: string
+        format:
+          type: string
+          example: LP
+        releaseYear:
+          type: integer
+          example: 1977
+        country:
+          type: string
+        condition:
+          type: string
+          example: Very Good Plus
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateRecordRequest:
+      type: object
+      required:
+        - title
+        - artist
+      properties:
+        title:
+          type: string
+        artist:
+          type: string
+        label:
+          type: string
+        format:
+          type: string
+        releaseYear:
+          type: integer
+        country:
+          type: string
+        condition:
+          type: string
+        notes:
+          type: string
+
+    UpdateRecordRequest:
+      allOf:
+        - $ref: "#/components/schemas/CreateRecordRequest"
