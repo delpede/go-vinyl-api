@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/delpede/go-vinyl-api/internal/api/generated"
 	"github.com/delpede/go-vinyl-api/internal/db"
@@ -16,21 +15,32 @@ type Server struct {
 }
 
 func (s *Server) GetRecords(c *gin.Context, params generated.GetRecordsParams) {
-	rows, err := s.DB.Query(
-		context.Background(),
-		`
+	query := `
 		SELECT id, title, artist, created_at, updated_at
 		FROM records
+	`
+	args := []any{}
+
+	// Optional full-text-ish search via the `q` query parameter.
+	// TODO: extend the match to `label` and `notes` once those columns exist.
+	if params.Q != nil && *params.Q != "" {
+		query += `
+		WHERE title ILIKE $1 OR artist ILIKE $1
+		`
+		args = append(args, "%"+*params.Q+"%")
+	}
+
+	query += `
 		ORDER BY created_at DESC
-		`,
-	)
+	`
+
+	rows, err := s.DB.Query(context.Background(), query, args...)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-	fmt.Println(rows)
 	defer rows.Close()
 
 	records := []generated.Record{}
